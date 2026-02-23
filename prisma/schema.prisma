@@ -1,0 +1,1011 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+  // Further reading:
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url      = env("DATABASE_URL")
+}
+
+// Necessary for Next auth
+model Account {
+  id                       String  @id @default(cuid()) // 账号ID
+  userId                   String // 用户ID
+  type                     String // 账号类型
+  provider                 String // 第三方登录提供商
+  providerAccountId        String // 第三方账号ID
+  refresh_token            String? // 刷新令牌
+  access_token             String? // 访问令牌
+  expires_at               Int? // 过期时间
+  token_type               String? // 令牌类型
+  scope                    String? // 权限范围
+  id_token                 String? // ID令牌
+  session_state            String? // 会话状态
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  refresh_token_expires_in Int? // 刷新令牌有效期
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid()) // 会话ID
+  sessionToken String   @unique // 会话令牌
+  userId       String // 用户ID
+  expires      DateTime // 过期时间
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+}
+
+model User {
+  id            String    @id @default(cuid()) // 用户ID
+  name          String? // 用户名
+  email         String? // 邮箱
+  emailVerified DateTime? // 邮箱验证时间
+  password      String? // 密码，需加密存储
+  accounts      Account[] // 账号列表
+  sessions      Session[] // 会话列表
+  createdAt     DateTime  @default(now()) // 创建时间
+  updatedAt     DateTime  @default(now()) @updatedAt // 更新时间
+  phone               String?      @unique // 手机号
+  phoneVerified       DateTime? // 手机号验证时间
+  status              Boolean      @default(true) // 用户状态 1正常 0禁用
+  isDeleted           Boolean      @default(false) // 是否已删除
+  roles               String[]     @default(["TESTER"]) // 众测角色（支持多角色）
+
+  // 众测平台字段（从 TestingUser 合并）
+  oaId                String?      @unique // OA系统ID
+  organization        String? // 所属机构
+  department          String? // 所属部门
+  subDepartment       String? // 二级部门
+  position            String? // 职能岗位
+  education           String? // 最高学历
+  maritalStatus       String? // 婚姻状况
+  annualIncome        String? // 年收入
+  specialties         String[] // 擅长领域
+  wechatOpenId        String?      @unique // 微信OpenID
+  alipayAccount       String? // 支付宝账号
+  testingLevel        TestingLevel @default(LEVEL_1) // 用户等级
+  totalPoints         Int          @default(0) // 总积分
+  availablePoints     Int          @default(0) // 可用积分
+  experience          Int          @default(0) // 经验值
+  activityCount       Int          @default(0) // 参与活动数
+  lastLoginIp         String? // 最后登录IP
+  lastLoginAt         DateTime? // 最后登录时间
+  isLiaison           Boolean      @default(false) // 是否为分行联络员
+  liaisionBranch      String? // 分行名称（如果是联络员）
+  notificationEnabled Boolean      @default(true) // 是否开启服务通知
+  privacyAgreed       Boolean      @default(false) // 是否同意隐私协议
+  privacyAgreedAt     DateTime? // 隐私协议同意时间
+
+  // 众测业务关系
+  taskOrders         TestTaskOrder[] // 用户的任务订单
+  defects            Defect[] // 用户提交的缺陷
+  rewards            Reward[] // 用户获得的奖励
+  withdrawals        Withdrawal[] // 用户的提现记录
+  tags               TestingUserTag[] // 用户标签
+  pointTransactions  PointTransaction[] // 用户的积分交易记录
+  leaderboardEntries Leaderboard[] // 用户的排行榜记录
+  academyFavorites   AcademyFavorite[] // 用户收藏的学堂文章
+  userSettings       UserSettings? // 用户设置信息
+  feedbacks          Feedback[] // 用户反馈
+  invitedRecords     InvitationRecord[] @relation("InviterRecords") // 用户作为推荐人的邀请记录
+  beingInvitedRecords InvitationRecord[] @relation("InviteeRecords") // 用户作为被推荐人的邀请记录
+  announcementReadRecords AnnouncementReadRecord[] // 系统公告已读记录
+  homepagePopupReadRecords HomepagePopupReadRecord[] // 首页弹窗已读记录
+
+  @@index([phone])
+  @@index([oaId])
+  @@index([testingLevel])
+  @@index([status])
+  @@index([isDeleted])
+}
+
+model VerificationToken {
+  identifier String // 标识符
+  token      String   @unique // 验证令牌
+  expires    DateTime // 过期时间
+
+  @@unique([identifier, token])
+}
+
+// ==================== 广发众测平台相关表 ====================
+
+// 众测系统表
+model TestSystem {
+  id        String   @id @default(cuid()) // 系统ID
+  name      String   @unique // 系统名称
+  isActive  Boolean  @default(true) // 是否启用
+  createdAt DateTime @default(now()) // 创建时间
+  updatedAt DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([name])
+  @@index([isActive])
+}
+
+// 众测用户角色枚举
+enum TestingRole {
+  SUPER_ADMIN // 超级管理员
+  TEST_ADMIN // 众测管理员
+  LIAISON // 分行众测联络员
+  TESTER // 众测测试人员
+  DEPT_MANAGER // 部门经理（积分预算初审、奖励金发放审核）
+  GENERAL_MANAGER // 总经理（积分预算终审）
+}
+
+// 众测用户等级
+enum TestingLevel {
+  LEVEL_1 // 新人 (0-499经验值)
+  LEVEL_2 // 资深老手 (500-799经验值)
+  LEVEL_3 // 资深老手2 (800+经验值)
+}
+
+// 任务类型
+enum TestTaskType {
+  FUNCTIONAL // 功能测试类
+  UX_SURVEY // 问卷调查类
+  INVITATION_REWARD // 邀请有奖类
+}
+
+// 任务状态
+enum TestTaskStatus {
+  SAVED // 已保存
+  PREPARING // 准备中
+  DEPT_REWARD_REVIEW // 部门经理积分审核中
+  GENERAL_REWARD_REVIEW // 总经理积分审核中
+  PENDING_PUBLISH // 待发布
+  EXECUTING // 执行中
+  EXECUTION_ENDED // 执行结束
+  ACCOUNTING_COMPLETED // 核算完成
+  REWARD_DISTRIBUTION_REVIEW // 积分发放审核中
+  PENDING_REWARD_DISTRIBUTION // 待发放积分
+  COMPLETED // 已完成
+}
+
+// 任务订单状态
+enum TestTaskOrderStatus {
+  PENDING // 待领取
+  IN_PROGRESS // 进行中
+  SUBMITTED // 已提交
+  COMPLETED // 已完成
+  CANCELLED // 已取消
+}
+
+// 缺陷/建议类型
+enum DefectType {
+  BUG // 缺陷
+  SUGGESTION // 建议
+}
+
+// 缺陷严重等级
+enum DefectSeverity {
+  CRITICAL // 致命
+  MAJOR // 严重
+  MINOR // 一般
+  TRIVIAL // 轻微
+  INVALID // 无效
+}
+
+// 建议等级
+enum SuggestionLevel {
+  EXCELLENT_SPECIAL // 特别优秀
+  EXCELLENT // 优秀
+  VALID // 有效
+  INVALID // 无效
+}
+
+// 缺陷状态
+enum DefectStatus {
+  SUBMITTED // 已提交
+  REVIEWING // 审核中
+  TO_CONFIRM // 待确认（业务判定后）
+  APPROVED // 已批准
+  REJECTED // 已驳回
+  DUPLICATE // 重复
+  CLOSED // 已关闭
+}
+
+// 奖励状态
+enum RewardStatus {
+  PENDING // 待审批
+  APPROVED // 已批准
+  REJECTED // 已驳回
+  ISSUED // 已发放
+  WITHDRAWN // 已提现
+}
+
+// 提现状态
+enum WithdrawalStatus {
+  PENDING // 待处理
+  PROCESSING // 处理中
+  COMPLETED // 已完成
+  FAILED // 失败
+  CANCELLED // 已取消
+}
+
+
+// 众测用户标签
+model TestingUserTag {
+  id        String      @id @default(cuid()) // 标签关联ID
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId    String // 用户ID
+  tag       TestingTag  @relation(fields: [tagId], references: [id], onDelete: Cascade) // 关联标签
+  tagId     String // 标签ID
+  value     String? // 标签值（从 rules 中选择的具体值）
+  createdAt DateTime    @default(now()) // 创建时间
+
+  @@unique([userId, tagId, value])
+  @@index([userId])
+  @@index([tagId])
+}
+
+// 众测标签
+model TestingTag {
+  id          String   @id @default(cuid()) // 标签ID
+  name        String   @unique // 标签名称
+  category    String // 标签分类
+  description String? // 标签描述
+  rules       String? // 标签规则配置 (JSON)
+  isActive    Boolean  @default(true) // 是否启用
+  createdAt   DateTime @default(now()) // 创建时间
+  updatedAt   DateTime @default(now()) @updatedAt // 更新时间
+
+  // 关系
+  users TestingUserTag[] // 拥有此标签的用户
+
+  @@index([category])
+}
+
+// 测试用例
+model TestCase {
+  id           String        @id @default(cuid()) // 用例ID
+  title        String // 用例名称
+  type         TestTaskType? // 用例类型
+  system       String // 所属系统
+  precondition String? // 测试准备
+  testSteps    String // 测试步骤 (JSON格式，包含每个步骤的描述和预期结果)
+  explanation  String? // 重点关注
+  attachments  String[] // 附件 (图片、视频等URL数组)
+  testData     TestData[] // 关联的测试数据
+  tasks        TestTask[]   @relation("TaskTestCases") // 关联的任务
+  defects      Defect[] // 此用例下的缺陷
+  isActive     Boolean      @default(true) // 是否启用
+  createdAt    DateTime     @default(now()) // 创建时间
+  updatedAt    DateTime     @default(now()) @updatedAt // 更新时间
+
+  @@index([type])
+  @@index([system])
+}
+
+// 测试数据
+model TestData {
+  id         String   @id @default(cuid()) // 数据ID
+  testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade) // 关联用例
+  testCaseId String // 用例ID
+  label      String // 数据标签
+  dataKey    String // 数据键
+  dataValue  String // 数据值
+  usageRule  String   @default("UNIQUE") // 使用规则: UNIQUE(一次性) / REUSABLE(可重复)
+  usageCount Int      @default(0) // 已使用次数
+  isActive   Boolean  @default(true) // 是否启用
+  createdAt  DateTime @default(now()) // 创建时间
+  updatedAt  DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([testCaseId])
+  @@index([label])
+}
+
+// 众测任务
+model TestTask {
+  id                     String              @id @default(cuid()) // 任务ID
+  title                  String // 任务标题
+  description            String? // 任务描述
+  type                   TestTaskType // 任务类型
+  system                 String // 所属系统
+  testTypes              String[] // 测试类型 (ANDROID, IOS, WEB, MINI_PROGRAM)
+  environment            String? // 测试环境
+  testPoints             String? // 测试重点
+  testRules              String? // 测试规则
+  personTags             String[] // 人员标签 (JSON 数组)
+  ruleFilter             String? // 积分分配规则
+  thumbnailImage         String? // 任务缩略图 (用于任务列表展示)
+  attachments            String? // 附件信息 (JSON格式: [{id, name, url, size, status}])
+  status                 TestTaskStatus      @default(PREPARING) // 任务状态
+  startTime              DateTime // 开始时间
+  endTime                DateTime // 结束时间
+  maxParticipants        Int // 最大参与人数
+  currentParticipants    Int                 @default(0) // 当前参与人数
+  testCases              TestCase[]          @relation("TaskTestCases") // 关联的用例
+  rewardConfig           RewardConfig? // 奖励配置
+  notificationConfig     NotificationConfig? // 通知配置
+  createdBy              String // 创建者ID
+  // 部门经理审批（积分预算初审）
+  deptApprovedBy         String? // 部门经理审批者ID
+  deptApprovalStatus     String? // 部门经理审批状态 (PENDING, APPROVED, REJECTED)
+  deptApprovalComment    String? // 部门经理审批意见
+  deptApprovedAt         DateTime? // 部门经理审批时间
+  // 总经理审批（积分预算终审）
+  generalApprovedBy      String? // 总经理审批者ID
+  generalApprovalStatus  String? // 总经理审批状态 (PENDING, APPROVED, REJECTED)
+  generalApprovalComment String? // 总经理审批意见
+  generalApprovedAt      DateTime? // 总经理审批时间
+  totalBudget            Float               @default(0) // 总预算
+  executionPoints        Int                 @default(0) // 执行分
+  estimatedParticipants  Int                 @default(0) // 预计参与人数
+  participationRate      Float               @default(0.7) // 参与率
+  validDefectRate        Float               @default(0.2) // 有效缺陷率
+  pointPerFeedback       Int                 @default(48) // 每反馈积分
+  orders                 TestTaskOrder[] // 任务订单
+  defects                Defect[] // 任务下的缺陷
+  rewards                Reward[] // 任务下的奖励
+  pointsApplications     PointsApplication[] // 积分申请记录
+  businessJudgmentTokens BusinessJudgmentToken[] // 业务判定访问令牌
+  isDeleted              Boolean             @default(false) // 是否已删除
+  isPaused               Boolean             @default(false) // 是否暂停任务
+  createdAt              DateTime            @default(now()) // 创建时间
+  updatedAt              DateTime            @default(now()) @updatedAt // 更新时间
+  publishedAt                  DateTime? // 发布时间
+  accountingCompletedAt        DateTime? // 核算完成时间
+  // 积分发放申请
+  rewardDistributionReason     String? // 积分发放申请事由
+  rewardDistributionAppliedAt  DateTime? // 积分发放申请时间
+  rewardDistributionAppliedBy  String? // 积分发放申请人ID
+
+  @@index([status])
+  @@index([type])
+  @@index([createdBy])
+  @@index([startTime])
+}
+
+// 任务订单
+model TestTaskOrder {
+  id               String              @id @default(cuid()) // 订单ID
+  task             TestTask            @relation(fields: [taskId], references: [id], onDelete: Cascade) // 关联任务
+  taskId           String // 任务ID
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId           String // 用户ID
+  status           TestTaskOrderStatus @default(PENDING) // 订单状态
+  defectCount      Int                 @default(0) // 缺陷数量
+  validDefectCount Int                 @default(0) // 有效缺陷数量
+  earnedPoints     Int                 @default(0) // 获得积分
+  startedAt        DateTime? // 开始时间
+  completedAt      DateTime? // 完成时间
+  submittedAt      DateTime? // 提交时间
+  createdAt        DateTime            @default(now()) // 创建时间
+  updatedAt        DateTime            @default(now()) @updatedAt // 更新时间
+
+  // 关系
+  defects Defect[] // 此订单下的缺陷
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@index([status])
+}
+
+// 缺陷/建议
+model Defect {
+  id              String           @id @default(cuid()) // 缺陷ID
+  task            TestTask         @relation(fields: [taskId], references: [id], onDelete: Cascade) // 关联任务
+  taskId          String // 任务ID
+  taskOrder       TestTaskOrder    @relation(fields: [taskOrderId], references: [id], onDelete: Cascade) // 关联订单
+  taskOrderId     String // 订单ID
+  testCase        TestCase?        @relation(fields: [testCaseId], references: [id]) // 关联用例（可选，无测试用例任务时为空）
+  testCaseId      String? // 用例ID（可选，无测试用例任务时为空）
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade) // 提交者
+  userId          String // 用户ID
+  title           String // 缺陷标题
+  description     String // 缺陷描述
+  type            DefectType // 缺陷类型
+  category        String? // 缺陷分类 (功能问题、性能问题、安全性问题、用户体验、兼容性问题)
+  severity        DefectSeverity? // 缺陷严重等级 (仅BUG)
+  suggestionLevel SuggestionLevel? // 建议等级 (仅SUGGESTION)
+  status          DefectStatus     @default(SUBMITTED) // 缺陷状态
+  reproducible    Boolean? // 是否可复现
+  steps           String? // 复现步骤
+  expectedResult  String? // 预期结果
+  actualResult    String? // 实际结果
+  attachments     String[] // 附件 (截图、视频等)
+  isDraft         Boolean          @default(false) // 是否为草稿
+  duplicateOf     String? // 重复的缺陷ID
+  duplicateGroup  DefectGroup?     @relation(fields: [duplicateGroupId], references: [id]) // 所属重复缺陷组
+  duplicateGroupId String? // 重复缺陷组ID
+  reviewedBy      String? // 审核者ID
+  reviewComment   String? // 审核意见
+  supplementaryExplanation String? // 补充说明
+  judgmentReason  String? // 业务判定原因说明
+  judgedAt        DateTime? // 判定时间
+  basePoints      Int              @default(0) // 等级积分（基础积分，可手工修改）
+  earnedPoints    Int              @default(0) // 实际获得积分（根据分配规则计算）
+  createdAt       DateTime         @default(now()) // 创建时间
+  updatedAt       DateTime         @default(now()) @updatedAt // 更新时间
+  reviewedAt      DateTime? // 审核时间
+
+  // 关系
+  reviews DefectReview[] // 缺陷审核记录
+  rewards Reward[] // 此缺陷关联的奖励
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([duplicateGroupId])
+}
+
+// 重复缺陷组
+model DefectGroup {
+  id          String   @id @default(cuid()) // 组ID
+  name        String // 组名
+  description String? // 组描述
+  createdBy   String // 创建者ID
+  createdAt   DateTime @default(now()) // 创建时间
+  updatedAt   DateTime @default(now()) @updatedAt // 更新时间
+
+  // 关系
+  defects Defect[] // 组内的缺陷
+
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+// 缺陷审核记录
+model DefectReview {
+  id         String   @id @default(cuid()) // 审核记录ID
+  defect     Defect   @relation(fields: [defectId], references: [id], onDelete: Cascade) // 关联缺陷
+  defectId   String // 缺陷ID
+  reviewerId String // 审核者ID
+  action     String // 审核操作 (APPROVE, REJECT, DUPLICATE, TRANSFER, CLOSE)
+  comment    String? // 审核意见
+  createdAt  DateTime @default(now()) // 创建时间
+  updatedAt  DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([defectId])
+  @@index([reviewerId])
+}
+
+// 奖励配置
+model RewardConfig {
+  id              String   @id @default(cuid()) // 配置ID
+  task            TestTask @relation(fields: [taskId], references: [id], onDelete: Cascade) // 关联任务
+  taskId          String   @unique // 任务ID
+  executionPoints Int // 执行分
+  pointsConfig    String // 动态积分配置 (JSON格式: [{label: "致命", value: 40, unit: "积分"}])
+  totalBudget     Float // 总预算
+  createdAt       DateTime @default(now()) // 创建时间
+  updatedAt       DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([taskId])
+}
+
+// 通知配置
+model NotificationConfig {
+  id             String   @id @default(cuid()) // 配置ID
+  task           TestTask @relation(fields: [taskId], references: [id], onDelete: Cascade) // 关联任务
+  taskId         String   @unique // 任务ID
+  wechatEnabled  Boolean  @default(true) // 是否启用微信通知
+  wechatTemplate String? // 微信通知模板内容
+  wechatTemplateId String? // 微信通知模板ID
+  lanxinEnabled  Boolean  @default(true) // 是否启用蓝信通知
+  lanxinTemplate String? // 蓝信通知模板内容
+  lanxinTemplateId String? // 蓝信通知模板ID
+  emailEnabled   Boolean  @default(true) // 是否启用邮件通知
+  emailTemplate  String? // 邮件通知模板内容
+  emailTemplateId String? // 邮件通知模板ID
+  createdAt      DateTime @default(now()) // 创建时间
+  updatedAt      DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([taskId])
+}
+
+// 奖励
+model Reward {
+  id              String       @id @default(cuid()) // 奖励ID
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId          String // 用户ID
+  task            TestTask     @relation(fields: [taskId], references: [id], onDelete: Cascade) // 关联任务
+  taskId          String // 任务ID
+  defect          Defect?      @relation(fields: [defectId], references: [id], onDelete: SetNull) // 关联缺陷
+  defectId        String? // 缺陷ID
+  points          Int // 奖励积分
+  type            String // 奖励类型 (EXECUTION, DEFECT, SUGGESTION, BONUS)
+  status          RewardStatus @default(PENDING) // 奖励状态
+  approvedBy      String? // 部门经理审批者ID（奖励金发放审核）
+  approvedAt      DateTime? // 部门经理审批时间
+  approvalComment String? // 部门经理审批意见
+  issuedAt        DateTime? // 发放时间
+  createdAt       DateTime     @default(now()) // 创建时间
+  updatedAt       DateTime     @default(now()) @updatedAt // 更新时间
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([status])
+}
+
+// 积分交易记录
+model PointTransaction {
+  id          String      @id @default(cuid()) // 交易ID
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId      String // 用户ID
+  points      Int // 积分数量
+  type        String // 交易类型 (EARN, REDEEM, WITHDRAW)
+  relatedId   String? // 关联ID (奖励ID或提现ID)
+  description String? // 交易描述
+  status      String      @default("COMPLETED") // 交易状态
+  createdAt   DateTime    @default(now()) // 创建时间
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// 提现记录
+model Withdrawal {
+  id            String           @id @default(cuid()) // 提现ID
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId        String // 用户ID
+  points        Int // 提现积分
+  amount        Float // 提现金额
+  alipayAccount String // 支付宝账号
+  status        WithdrawalStatus @default(PENDING) // 提现状态
+  transactionId String? // 支付宝交易ID
+  failureReason String? // 失败原因
+  processedBy   String? // 处理者ID
+  processedAt   DateTime? // 处理时间
+  createdAt     DateTime         @default(now()) // 创建时间
+  updatedAt     DateTime         @default(now()) @updatedAt // 更新时间
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 公告信息
+model Announcement {
+  id        String   @id @default(cuid()) // 公告ID
+  title     String // 公告标题
+  content   String // 公告内容
+  isActive  Boolean  @default(true) // 是否启用
+  sort      Int      @default(0) // 排序
+  startTime DateTime? // 起始时间
+  endTime   DateTime? // 关闭时间
+  createdAt DateTime @default(now()) // 创建时间
+  updatedAt DateTime @default(now()) @updatedAt // 更新时间
+
+  // 关系
+  readRecords AnnouncementReadRecord[] // 已读记录
+
+  @@index([isActive])
+}
+
+// 系统公告已读记录表
+model AnnouncementReadRecord {
+  id             String       @id @default(cuid()) // 记录ID
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade) // 关联公告
+  announcementId String // 公告ID
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId         String // 用户ID
+  readAt         DateTime     @default(now()) // 阅读时间
+
+  @@unique([announcementId, userId]) // 每个用户对每条公告只有一条已读记录
+  @@index([userId])
+  @@index([announcementId])
+  @@index([readAt])
+}
+
+// 排行榜
+model Leaderboard {
+  id        String      @id @default(cuid()) // 排行榜ID
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId    String // 用户ID
+  type      String // 排行榜类型 (TOTAL_POINTS, TASK_COUNT, DEFECT_COUNT)
+  rank      Int // 排名
+  value     Int // 排行值
+  period    String // 统计周期 (DAILY, WEEKLY, MONTHLY, TOTAL)
+  updatedAt DateTime    @default(now()) @updatedAt // 更新时间
+
+  @@unique([userId, type, period])
+  @@index([type])
+  @@index([period])
+  @@index([rank])
+}
+
+// 众测审核记录
+model TestingAuditLog {
+  id           String   @id @default(cuid()) // 审核日志ID
+  action       String // 操作类型 (TASK_PUBLISH, TASK_APPROVE, DEFECT_REVIEW, REWARD_APPROVE, etc.)
+  module       String // 操作模块 (TASK, DEFECT, REWARD, USER, etc.)
+  description  String // 操作描述
+  targetId     String? // 操作目标ID
+  targetType   String? // 操作目标类型
+  operatorId   String? // 操作者ID
+  operatorInfo String? // 操作者信息快照
+  requestData  String? // 请求数据 (JSON)
+  responseData String? // 响应数据 (JSON)
+  status       String   @default("SUCCESS") // 操作状态
+  errorMessage String? // 错误信息
+  ipAddress    String? // 操作IP
+  userAgent    String? // 用户代理
+  duration     Int? // 操作耗时 (毫秒)
+  createdAt    DateTime @default(now()) // 操作时间
+
+  @@index([action])
+  @@index([module])
+  @@index([operatorId])
+  @@index([createdAt])
+}
+
+// 用户设置信息表
+model UserSettings {
+  id                String      @id @default(cuid()) // 设置ID
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId            String      @unique // 用户ID
+  name              String? // 姓名
+  gender            String? // 性别
+  ageRange          String? // 年龄段
+  phoneModel        String? // 手机品牌、型号
+  province          String? // 省份
+  city              String? // 城市
+  organization      String? // 机构
+  department        String? // 部门
+  secondDepartment  String? // 二级部门
+  skillTags         String[] // 擅长专业标签
+  createdAt         DateTime @default(now()) // 创建时间
+  updatedAt         DateTime @default(now()) @updatedAt // 更新时间
+  blueMessenger     Boolean  @default(true) // 蓝信通知
+  emailNotification Boolean  @default(false) // 邮件通知
+  wechatNotification Boolean @default(false) // 微信小程序通知
+
+  @@index([userId])
+}
+
+// 用户反馈表
+model Feedback {
+  id          String      @id @default(cuid()) // 反馈ID
+  userId      String // 用户ID
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  content     String // 反馈内容
+  attachments String[] // 附件 (图片、视频等)
+  createdAt   DateTime @default(now()) // 创建时间
+  updatedAt   DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// 众测学堂文章表
+model Academy {
+  id          String   @id @default(cuid()) // 文章ID
+  title       String // 文章标题
+  content     String   @db.Text // 文章内容 (富文本HTML)
+  coverImage  String // 封面图片
+  publishTime DateTime // 发布时间
+  sequence    Int      @default(0) // 序号/排序
+  isActive    Boolean  @default(true) // 是否启用
+  createdAt   DateTime @default(now()) // 创建时间
+  updatedAt   DateTime @default(now()) @updatedAt // 更新时间
+  favorites   AcademyFavorite[] // 被哪些用户收藏（反向关系）
+
+  @@index([publishTime])
+  @@index([sequence])
+  @@index([isActive])
+}
+
+// 学堂文章收藏表
+model AcademyFavorite {
+  id            String      @id @default(cuid()) // 收藏ID
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String // 用户ID
+  academy       Academy     @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  academyId     String // 文章ID
+  createdAt     DateTime    @default(now()) // 收藏时间
+
+  @@unique([userId, academyId])
+  @@index([userId])
+  @@index([academyId])
+}
+
+// 通知模版类型枚举
+enum NotificationTemplateType {
+  SMS // 蓝信通知
+  EMAIL // 邮件通知
+  WECHAT // 微信小程序通知
+  AUDIT_OPINION // 审核意见模版
+}
+
+// 通知模版表
+model NotificationTemplate {
+  id        String                   @id @default(cuid()) // 模版ID
+  name      String // 模版名称
+  type      NotificationTemplateType // 模版类型
+  content   String // 模版内容 (邮件为富文本HTML)
+  createdBy String? // 创建者ID
+  isActive  Boolean                  @default(true) // 是否启用
+  createdAt DateTime                 @default(now()) // 创建时间
+  updatedAt DateTime                 @default(now()) @updatedAt // 更新时间
+
+  @@index([type])
+  @@index([isActive])
+  @@index([createdBy])
+}
+
+// 消息通知表（具体发送的通知内容）
+model Notification {
+  id            String                     @id @default(cuid()) // 通知ID
+  type          NotificationTemplateType // 通知类型
+  content       String // 通知内容 (邮件为富文本HTML)
+  createdBy     String? // 创建者ID
+  publishedAt   DateTime? // 发布时间
+  isActive      Boolean                    @default(true) // 是否启用
+  createdAt     DateTime                   @default(now()) // 创建时间
+  updatedAt     DateTime                   @default(now()) @updatedAt // 更新时间
+  recipientTags NotificationRecipientTag[] // 关联的收件人标签
+
+  @@index([type])
+  @@index([isActive])
+  @@index([createdBy])
+  @@index([publishedAt])
+}
+
+// 消息通知收件人标签关联表
+model NotificationRecipientTag {
+  id             String       @id @default(cuid()) // 关联ID
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade) // 关联通知
+  notificationId String // 通知ID
+  tagId          String // 标签ID (指向 TestingTag 表的 id)
+  tagValue       String // 标签值
+  createdAt      DateTime     @default(now()) // 创建时间
+
+  @@index([notificationId])
+  @@index([tagId])
+}
+
+// 数据字典模型
+model DataDictionary {
+  id          String               @id @default(cuid()) // 字典ID
+  code        String               @unique // 字典编码 (唯一标识)
+  name        String // 字典名称
+  category    String // 分类
+  description String? // 描述
+  valueType   String               @default("LIST") // 值类型: LIST(列表), NUMBER(数字)
+  items       DataDictionaryItem[] // 字典项列表
+  isActive    Boolean              @default(true) // 是否启用
+  createdAt   DateTime             @default(now()) // 创建时间
+  updatedAt   DateTime             @updatedAt // 更新时间
+
+  @@index([category])
+  @@index([code])
+  @@index([isActive])
+}
+
+// 数据字典项模型
+model DataDictionaryItem {
+  id           String         @id @default(cuid()) // 字典项ID
+  dictionary   DataDictionary @relation(fields: [dictionaryId], references: [id], onDelete: Cascade) // 所属字典
+  dictionaryId String // 字典ID
+  code         String? // 码值（唯一标识，如 CRITICAL、EXCELLENT_SPECIAL）
+  label        String // 显示标签（如 致命、特别优秀）
+  value        String? // 实际值（如 40、30，用于积分等数值）
+  description  String? // 描述
+  sort         Int            @default(0) // 排序
+  isActive     Boolean        @default(true) // 是否启用
+  createdAt    DateTime       @default(now()) // 创建时间
+
+  @@index([dictionaryId])
+  @@index([sort])
+  @@index([code])
+}
+
+// 角色管理模型
+model Role {
+  id          String   @id @default(cuid()) // 角色ID
+  code        String   @unique // 角色编码 (对应 TestingRole 枚举值)
+  name        String // 角色名称
+  description String? // 角色描述
+  permissions String[] @default([]) // 菜单权限列表
+  status      Boolean  @default(true) // 状态 (true: 启用, false: 禁用)
+  createdAt   DateTime @default(now()) // 创建时间
+  updatedAt   DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([code])
+  @@index([status])
+}
+
+// 积分申请状态枚举
+enum PointsApplicationStatus {
+  PENDING // 待审核
+  DEPT_APPROVED // 部门经理已批准
+  DEPT_REJECTED // 部门经理已驳回
+  GENERAL_APPROVED // 总经理已批准
+  GENERAL_REJECTED // 总经理已驳回
+  COMPLETED // 已完成
+}
+
+// 积分申请记录表
+model PointsApplication {
+  id                   String                   @id @default(cuid()) // 申请ID
+  taskId               String // 关联任务ID
+  task                 TestTask                 @relation(fields: [taskId], references: [id], onDelete: Cascade) // 关联任务
+  appliedPoints        Float // 申请积分
+  isManualInput        Boolean                  @default(false) // 是否手动填写
+  participationRate    Float? // 参测率
+  validFeedbackRate    Float? // 有效反馈率
+  pointsPerFeedback    Int? // 每反馈积分
+  participantCount     Int? // 参测人数
+  executionScore       Int? // 执行分
+  rewardRule           String? // 奖励规则
+  reason               String? // 申请事由
+  status               PointsApplicationStatus  @default(PENDING) // 申请状态
+  applicantId          String // 申请人ID
+  applicantName        String? // 申请人姓名
+  deptReviewerId       String? // 部门经理审核人ID
+  deptReviewerName     String? // 部门经理审核人姓名
+  deptReviewComment    String? // 部门经理审核意见
+  deptReviewedAt       DateTime? // 部门经理审核时间
+  generalReviewerId    String? // 总经理审核人ID
+  generalReviewerName  String? // 总经理审核人姓名
+  generalReviewComment String? // 总经理审核意见
+  generalReviewedAt    DateTime? // 总经理审核时间
+  createdAt            DateTime                 @default(now()) // 创建时间
+  updatedAt            DateTime                 @default(now()) @updatedAt // 更新时间
+
+  @@index([taskId])
+  @@index([status])
+  @@index([applicantId])
+  @@index([createdAt])
+}
+
+// 业务判定访问令牌表
+model BusinessJudgmentToken {
+  id        String   @id @default(cuid()) // 令牌ID
+  token     String   @unique // 访问令牌（唯一）
+  taskId    String // 关联任务ID
+  task      TestTask @relation(fields: [taskId], references: [id], onDelete: Cascade) // 关联任务
+  expiresAt DateTime // 过期时间
+  createdBy String // 创建者ID（众测管理员）
+  createdAt DateTime @default(now()) // 创建时间
+  isRevoked Boolean  @default(false) // 是否已撤销
+
+  @@index([token])
+  @@index([taskId])
+  @@index([expiresAt])
+  @@index([createdBy])
+}
+
+// 轮播图
+model Carousel {
+  id        String   @id @default(cuid()) // 轮播图ID
+  image     String // 图片
+  link      String // 链接
+  channels  String[] // 渠道（支持多选：MINI_PROGRAM-小程序, PC-PC端）
+  sequence  Int      @default(0) // 序号/排序
+  createdAt DateTime @default(now()) // 创建时间
+  updatedAt DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([sequence])
+}
+
+// 滑动标签
+model SlidingTab {
+  id        String   @id @default(cuid()) // 滑动标签ID
+  image     String // 图片
+  text      String // 标签文字
+  link      String // 链接
+  channels  String[] // 渠道（支持多选：MINI_PROGRAM-小程序, PC-PC端）
+  sequence  Int      @default(0) // 序号/排序
+  createdAt DateTime @default(now()) // 创建时间
+  updatedAt DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([sequence])
+}
+
+// 首页弹窗
+model HomepagePopup {
+  id          String   @id @default(cuid()) // 弹窗ID
+  type        String // 弹窗类型 (IMAGE-图片弹窗, TEXT-文字弹窗)
+  title       String // 弹窗标题
+  image       String? // 图片URL（图片弹窗必填）
+  content     String? // 内容摘要（文字弹窗必填）
+  link        String? // 链接地址
+  startTime   DateTime // 起始时间
+  endTime     DateTime // 关闭时间
+  sequence    Int      @default(0) // 序号/排序
+  isActive    Boolean  @default(true) // 是否启用
+  createdAt   DateTime @default(now()) // 创建时间
+  updatedAt   DateTime @default(now()) @updatedAt // 更新时间
+  readRecords HomepagePopupReadRecord[] // 已读记录
+
+  @@index([type])
+  @@index([sequence])
+  @@index([isActive])
+  @@index([startTime, endTime])
+}
+
+// 首页弹窗已读记录表
+model HomepagePopupReadRecord {
+  id          String        @id @default(cuid()) // 记录ID
+  popup       HomepagePopup @relation(fields: [popupId], references: [id], onDelete: Cascade) // 关联弹窗
+  popupId     String // 弹窗ID
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
+  userId      String // 用户ID
+  readAt      DateTime      @default(now()) // 阅读时间
+
+  @@unique([popupId, userId]) // 每个用户对每个弹窗只有一条已读记录
+  @@index([userId])
+  @@index([popupId])
+  @@index([readAt])
+}
+
+// 邀请有奖活动表
+model InvitationReward {
+  id                String   @id @default(cuid()) // 活动ID
+  title             String // 活动标题
+  system            String // 系统标识
+  personTags        String[] // 人员标签数组
+  selectedTagIds    String[] // 选中的标签ID数组
+  expectedInviteCount Int    @default(0) // 预计邀请人数
+  startTime         DateTime // 开始时间
+  endTime           DateTime // 结束时间
+  posterImage       String // 海报图片URL
+  isActive          Boolean  @default(true) // 是否开启
+  sequence          Int      @default(0) // 排序序号
+  createdAt         DateTime @default(now()) // 创建时间
+  updatedAt         DateTime @default(now()) @updatedAt // 更新时间
+
+  records           InvitationRecord[] // 关联的邀请记录
+
+  @@index([isActive])
+  @@index([sequence])
+  @@index([startTime, endTime])
+}
+
+// 邀请有奖记录表
+model InvitationRecord {
+  id              String   @id @default(cuid()) // 记录ID
+  inviter         User     @relation("InviterRecords", fields: [inviterId], references: [id], onDelete: Cascade) // 推荐人
+  inviterId       String // 推荐人ID
+  invitee         User     @relation("InviteeRecords", fields: [inviteeId], references: [id], onDelete: Cascade) // 被推荐人
+  inviteeId       String // 被推荐人ID
+  invitationReward InvitationReward? @relation(fields: [rewardId], references: [id], onDelete: SetNull) // 关联邀请活动
+  rewardId        String? // 邀请活动ID
+  inviteeAcceptedTask Boolean @default(false) // 被推荐人是否领取任务
+  inviteeSubmittedDefects Boolean @default(false) // 被推荐人是否提报有效缺陷
+  inviterEarnedPoints Int @default(0) // 推荐人获得的积分
+  status          String   @default("PENDING") // 状态 (PENDING, COMPLETED, CANCELLED)
+  completedAt     DateTime? // 完成时间
+  createdAt       DateTime @default(now()) // 创建时间
+  updatedAt       DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([inviterId])
+  @@index([inviteeId])
+  @@index([rewardId])
+  @@index([status])
+}
+
+// 设备管理模型
+model Device {
+  id          String   @id @default(cuid()) // 设备ID
+  brand       String // 品牌
+  brandZh     String // 品牌中文
+  model       String // 型号
+  modelAlias  String? // 型号别名
+  systemVersion String // 系统版本
+  resolution  String? // 分辨率
+  cpuModel    String? // CPU型号
+  cpuCores    Int? // CPU核数
+  memory      String? // 内存
+  sdkVersion  String? // SDK版本
+  cpuFrequency String? // CPU频率
+  isActive    Boolean  @default(true) // 是否启用
+  createdAt   DateTime @default(now()) // 创建时间
+  updatedAt   DateTime @default(now()) @updatedAt // 更新时间
+
+  @@index([brand])
+  @@index([model])
+  @@index([systemVersion])
+  @@index([isActive])
+}

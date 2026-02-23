@@ -1,0 +1,41 @@
+services:
+    # PostgreSQL 数据库
+    db:
+        image: postgres:17
+        container_name: nextmall-postgres
+        restart: always
+
+        ports:
+            - '5432:5432'
+        environment:
+            POSTGRES_DB: nextmall
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        volumes:
+            - postgres:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U postgres']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    adminer:
+        image: adminer
+        container_name: nextmall-adminer
+        restart: always
+        networks:
+            - default
+        depends_on:
+            - db
+        environment:
+            - ADMINER_DESIGN=pepa-linha-dark
+        ports:
+            - '8081:8080'
+
+volumes:
+    postgres:
+    output:
+
+networks:
+    default:
+        driver: bridge

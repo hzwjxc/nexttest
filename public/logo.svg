@@ -1,0 +1,113 @@
+<svg data-v-0dd9719b="" version="1.0" xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    viewBox="0 0 215.000000 62.000000" preserveAspectRatio="xMidYMid meet"
+    color-interpolation-filters="sRGB" style="margin: auto;">
+
+    <g data-v-0dd9719b="" fill="#363383" class="icon-text-wrapper icon-svg-group iconsvg"
+        transform="translate(0, 0)">
+        <g fill="#ff3938" class="iconsvg-imagesvg icon_container" transform="translate(0,0)">
+            <rect fill="#363383" fill-opacity="0" stroke-width="2" x="0" y="0" width="61"
+                height="61" class="image-rect"></rect>
+            <svg viewBox="0 0 60 60" x="0" y="0" width="61" height="61" class="image-svg-svg bn"
+                style="overflow: visible;">
+                <g hollow-target="iconBnFill" mask="url(#dd6befe6-a6a4-4dee-bb32-c092261094c6)">
+                    <g>
+                        <svg fill="#000000" xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+                            viewBox="0 0 60 60" version="1.1" x="0" y="0" style="overflow: visible;"
+                            width="60" height="60" filtersec="colorsf5401022967"
+                            filter="url(#3YZC980uqcETLxEAlfdkj)">
+                            <g transform="scale(1, 1) skewX(0)">
+                                <title>96 - Rounded (Solid)</title>
+                                <desc>Created with Sketch.</desc>
+                                <g fill-rule="evenodd">
+                                    <g fill="#000000">
+                                        <path
+                                            d="M49.001,0 L10.999,0 C4.934,0 0,4.934 0,10.999 L0,49.001 C0,55.066 4.934,60 10.999,60 L49.001,60 C55.065,60 60,55.066 60,49.001 L60,10.999 C60,4.934 55.065,0 49.001,0"></path>
+                                    </g>
+                                </g>
+                            </g>
+                            <defs>
+                                <filter id="3YZC980uqcETLxEAlfdkj">
+                                    <feColorMatrix type="matrix"
+                                        values="0 0 0 0 0.99609375  0 0 0 0 0.22265625  0 0 0 0 0.21875  0 0 0 1 0"></feColorMatrix>
+                                </filter>
+                            </defs>
+                        </svg>
+                    </g>
+                    <g filter="url(#colors8137702452)">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 79.425 57.09375"
+                            width="57" height="47" x="0.5" y="11.5" class="image-svg-letter">
+                            <!-- 这里的 path 原先是云焙工坊，替换为星禾屿 -->
+                            <text x="2" y="37" font-family="Arial, Helvetica, 'Microsoft YaHei', '微软雅黑', sans-serif" font-size="38" fill="#fff" font-weight="bold">XHY</text>
+                        </svg>
+                    </g>
+                </g>
+                <mask id="dd6befe6-a6a4-4dee-bb32-c092261094c6">
+                    <g fill="white">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+                            viewBox="0 0 60 60" version="1.1" x="0" y="0" style="overflow: visible;"
+                            width="60" height="60" filtersec="colorsf5401022967">
+                            <g transform="scale(1, 1) skewX(0)">
+                                <title>96 - Rounded (Solid)</title>
+                                <desc>Created with Sketch.</desc>
+                                <g fill-rule="evenodd">
+                                    <g>
+                                        <path
+                                            d="M49.001,0 L10.999,0 C4.934,0 0,4.934 0,10.999 L0,49.001 C0,55.066 4.934,60 10.999,60 L49.001,60 C55.065,60 60,55.066 60,49.001 L60,10.999 C60,4.934 55.065,0 49.001,0"></path>
+                                    </g>
+                                </g>
+                            </g>
+                            <defs></defs>
+                        </svg>
+                    </g>
+                    <g fill="black">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 79.425 57.09375"
+                            width="57" height="47" x=".5" y="11.5" class="image-svg-letter">
+                            <text x="2" y="37" font-family="Arial, Helvetica, 'Microsoft YaHei', '微软雅黑', sans-serif" font-size="38" fill="black" font-weight="bold">XHY</text>
+                        </svg>
+                    </g>
+                </mask>
+            </svg>
+            <defs>
+                <filter id="colors8137702452">
+                    <feColorMatrix type="matrix"
+                        values="0 0 0 0 0.2109375  0 0 0 0 0.19921875  0 0 0 0 0.51171875  0 0 0 1 0"
+                        class="icon-fecolormatrix"></feColorMatrix>
+                </filter>
+                <filter id="colorsf5401022967">
+                    <feColorMatrix type="matrix"
+                        values="0 0 0 0 0.99609375  0 0 0 0 0.99609375  0 0 0 0 0.99609375  0 0 0 1 0"
+                        class="icon-fecolormatrix"></feColorMatrix>
+                </filter>
+                <filter id="colorsb9354374061">
+                    <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+                        class="icon-fecolormatrix"></feColorMatrix>
+                </filter>
+            </defs>
+        </g>
+        <g transform="translate(68,12.319997787475586)">
+            <g data-gra="path-name" fill-rule="" class="tp-name iconsvg-namesvg">
+                <g transform="scale(1)">
+                    <g>
+                        <!-- 原先的 path 被文字替换 -->
+                        <text
+                            x="10"
+                            y="34"
+                            font-family="Arial, Helvetica, 'Microsoft YaHei', '微软雅黑', sans-serif"
+                            font-size="45"
+                            fill="#363383"
+                            font-weight="bold"
+                        >星禾屿</text>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+    <defs v-gra="od"></defs>
+</svg>
