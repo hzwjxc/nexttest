@@ -341,3 +341,7 @@ Defect → 依赖 TestTask, TestTaskOrder, User, TestCase, DefectGroup
 第五批（依赖第四批）：
 DefectReview → 依赖 Defect
 Reward → 依赖 User, TestTask, Defect
+
+# 给宿主机的 output 目录开放写入权限
+
+chmod -R 777 ~/nexttest/output
