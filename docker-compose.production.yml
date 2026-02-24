@@ -60,11 +60,10 @@ services:
             db:
                 condition: service_healthy
         volumes:
-            - output:/app/output
+            - ./output:/app/output
 
 volumes:
     postgres:
-    output:
 
 networks:
     default:
