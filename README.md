@@ -240,7 +240,11 @@ docker compose up -d
 
 ## 生产构建
 
+构建镜像
+docker-compose -f docker-compose.production.yml --env-file .env.production build
+停止
 docker-compose -f docker-compose.production.yml --env-file .env.production down
+启动
 docker-compose -f docker-compose.production.yml --env-file .env.production up -d
 
 ## 生产构建报错
