@@ -117,8 +117,8 @@ export default function HomepagePopupDialog({
                 image: popupData.image || '',
                 content: popupData.content || '',
                 link: popupData.link || '',
-                startTime: formatDate(popupData.startTime),
-                endTime: formatDate(popupData.endTime),
+                startTime: formatDate(new Date(popupData.startTime)),
+                endTime: formatDate(new Date(popupData.endTime)),
                 isActive: popupData.isActive,
             });
         } else if (open && !popupId) {

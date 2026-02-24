@@ -63,7 +63,7 @@ RUN mkdir -p /app/output && chown -R nextjs:nodejs /app/output
 USER root
 # 复制 docker-entrypoint.sh 脚本并设置执行权限
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 USER nextjs
 

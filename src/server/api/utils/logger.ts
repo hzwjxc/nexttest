@@ -1,6 +1,7 @@
 import { type PrismaClient } from '@prisma/client';
-import { LogStatus } from '@prisma/client';
 import { type Session } from 'next-auth';
+
+type LogStatus = 'SUCCESS' | 'FAILED';
 
 export interface LogContext {
     db: PrismaClient;
@@ -57,24 +58,25 @@ export async function logOperation(ctx: LogContext, data: LogData) {
             ? JSON.stringify(data.responseData)
             : undefined;
 
-        await ctx.db.operationLog.create({
-            data: {
-                action: data.action,
-                module: data.module,
-                description: data.description,
-                targetId: data.targetId,
-                targetType: data.targetType,
-                userId,
-                userInfo,
-                ipAddress,
-                userAgent,
-                requestData,
-                responseData,
-                status: data.status || LogStatus.SUCCESS,
-                errorMessage: data.errorMessage,
-                duration: data.duration,
-            },
-        });
+        // OperationLog 模型暂未在 schema 中定义，日志暂不写入数据库
+        // await ctx.db.operationLog.create({
+        //     data: {
+        //         action: data.action,
+        //         module: data.module,
+        //         description: data.description,
+        //         targetId: data.targetId,
+        //         targetType: data.targetType,
+        //         userId,
+        //         userInfo,
+        //         ipAddress,
+        //         userAgent,
+        //         requestData,
+        //         responseData,
+        //         status: data.status || 'SUCCESS',
+        //         errorMessage: data.errorMessage,
+        //         duration: data.duration,
+        //     },
+        // });
     } catch (error) {
         // 日志记录失败不应该影响主业务流程
         console.error('Failed to log operation:', error);
@@ -129,7 +131,7 @@ export function withLogging<T extends any[], R>(
                     ...getTargetInfo?.(...args),
                     requestData: args[0], // 通常第一个参数是input
                     responseData: result,
-                    status: LogStatus.SUCCESS,
+                    status: 'SUCCESS',
                     duration,
                 });
 
@@ -144,7 +146,7 @@ export function withLogging<T extends any[], R>(
                     description: `${getDescription(...args)} - 失败`,
                     ...getTargetInfo?.(...args),
                     requestData: args[0],
-                    status: LogStatus.FAILED,
+                    status: 'FAILED',
                     errorMessage:
                         error instanceof Error ? error.message : String(error),
                     duration,

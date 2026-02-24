@@ -54,7 +54,7 @@ export const notificationRouter = createTRPCRouter({
                     }))
                 };
             }
-            return notification;
+            return null;
         }),
 
     // 创建消息通知

@@ -14,7 +14,7 @@ interface AdminGuardProps {
 
 export default function AdminGuard({
     children,
-    allowedRoles = [ROLES.SUPERADMIN, ROLES.VENDOR],
+    allowedRoles = [ROLES.SUPER_ADMIN],
 }: AdminGuardProps) {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -133,9 +133,7 @@ export default function AdminGuard({
                         colorScheme="blue"
                         onClick={() => {
                             // 根据用户角色跳转到对应页面
-                            if (userRole === ROLES.VENDOR) {
-                                router.push('/vendor');
-                            } else if ([ROLES.SUPERADMIN].includes(userRole)) {
+                            if (userRole === ROLES.SUPER_ADMIN) {
                                 router.push('/admin');
                             } else {
                                 router.push('/h5');

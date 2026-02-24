@@ -229,3 +229,77 @@ npx prisma migrate deploy
 
 初始化种子数据
 npx tsx .\scripts\init-dictionaries.ts
+
+## 本地构建
+
+pnpm build
+pnpm start
+docker compose up -d
+
+---
+
+## 生产构建
+
+docker-compose -f docker-compose.production.yml --env-file .env.production up -d
+
+---
+
+# 迁移数据库
+
+1. 推送数据库结构
+   pnpm db:push
+
+2. 导出数据库表的sql数据文件
+
+方案：按表依赖顺序导入
+既然无法禁用外键检查，就必须按正确顺序导入。根据你的 schema，正确的导入顺序是：
+
+第一批（无外键依赖的基础表）：
+User
+VerificationToken
+TestSystem
+TestingTag
+TestCase
+Announcement
+HomepagePopup
+InvitationReward
+DataDictionary
+NotificationTemplate
+Notification
+DefectGroup
+Carousel
+SlidingTab
+Device
+Role
+Academy
+
+第二批（依赖第一批）：
+Account → 依赖 User
+Session → 依赖 User
+TestingUserTag → 依赖 User, TestingTag
+TestData → 依赖 TestCase
+TestTask → 依赖 TestCase（多对多）
+UserSettings → 依赖 User
+Feedback → 依赖 User
+AcademyFavorite → 依赖 User, Academy
+AnnouncementReadRecord → 依赖 User, Announcement
+HomepagePopupReadRecord → 依赖 User, HomepagePopup
+DataDictionaryItem → 依赖 DataDictionary
+NotificationRecipientTag → 依赖 Notification
+
+第三批（依赖第二批）：
+TestTaskOrder → 依赖 User, TestTask
+RewardConfig → 依赖 TestTask
+NotificationConfig → 依赖 TestTask
+Withdrawal → 依赖 User
+PointTransaction → 依赖 User
+BusinessJudgmentToken → 依赖 TestTask
+PointsApplication → 依赖 TestTask
+InvitationRecord → 依赖 User, InvitationReward
+
+第四批（依赖第三批）：
+Defect → 依赖 TestTask, TestTaskOrder, User, TestCase, DefectGroup
+
+第五批（依赖第四批）：
+DefectReview → 依赖 Defect
+Reward → 依赖 User, TestTask, Defect

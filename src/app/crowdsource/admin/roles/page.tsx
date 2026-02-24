@@ -768,7 +768,7 @@ export default function RolesPage() {
                                     </Text>
                                 </Text>
                                 {currentRole?.id ? (
-                                    <NativeSelectRoot>
+                                    <NativeSelectRoot disabled>
                                         <NativeSelectField
                                             value={currentRole.code}
                                             onChange={(e) =>
@@ -778,7 +778,6 @@ export default function RolesPage() {
                                                 })
                                             }
                                             fontSize="14px"
-                                            disabled
                                         >
                                             {Object.entries(ROLE_MAP).map(
                                                 ([key, value]) => (

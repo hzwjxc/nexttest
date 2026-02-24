@@ -11,7 +11,10 @@ export const userSettingsRouter = createTRPCRouter({
       where: { id: userId },
       select: {
         phone: true,
-        alipayAccount: true
+        alipayAccount: true,
+        organization: true,
+        department: true,
+        subDepartment: true,
       },
     });
 
@@ -27,6 +30,9 @@ export const userSettingsRouter = createTRPCRouter({
       ...settings,
       phone: user.phone,
       paymentAccount: user.alipayAccount,
+      organization: user.organization,
+      department: user.department,
+      secondDepartment: user.subDepartment,
     };
   }),
 
@@ -52,13 +58,25 @@ export const userSettingsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
+      const { organization, department, secondDepartment, ...settingsInput } = input;
+
+      // 将机构/部门字段写入 User 表
+      await ctx.db.user.update({
+        where: { id: userId },
+        data: {
+          organization,
+          department,
+          subDepartment: secondDepartment,
+        },
+      });
+
       const settings = await ctx.db.userSettings.upsert({
         where: { userId },
         create: {
           userId,
-          ...input,
+          ...settingsInput,
         },
-        update: input,
+        update: settingsInput,
       });
 
       return settings;

@@ -113,7 +113,7 @@ export default function MessageCard() {
                             borderTop={index > 0 ? '1px' : 'none'}
                             borderColor="#E5E6EB"
                             bg={!message.isRead ? '#FAFBFC' : 'white'}
-                            onClick={() => handleMessageClick(message)}
+                            onClick={() => handleMessageClick(message as Message)}
                         >
                             <Flex align="center" justify="space-between">
                                 <Text

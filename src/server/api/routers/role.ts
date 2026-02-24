@@ -137,12 +137,14 @@ export const roleRouter = createTRPCRouter({
     .input(z.string())
     .mutation(async ({ ctx, input }) => {
       // 检查是否有用户使用该角色
-      const usersWithRole = await ctx.db.testingUser.count({
-        where: { testingRole: input as any },
-      });
-
-      if (usersWithRole > 0) {
-        throw new Error('该角色下还有用户，无法删除');
+      const role = await ctx.db.role.findUnique({ where: { id: input }, select: { code: true } });
+      if (role) {
+        const usersWithRole = await ctx.db.user.count({
+          where: { roles: { has: role.code } },
+        });
+        if (usersWithRole > 0) {
+          throw new Error('该角色下还有用户，无法删除');
+        }
       }
 
       await ctx.db.role.delete({

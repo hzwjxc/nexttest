@@ -152,8 +152,7 @@ export const reviewRouter = createTRPCRouter({
                     (d) =>
                         d.status === 'SUBMITTED' ||
                         d.status === 'REVIEWING' ||
-                        d.status === 'TO_CONFIRM' ||
-                        d.status === 'TO_CONFIRM_DEV'
+                        d.status === 'TO_CONFIRM'
                 ).length;
 
                 // 计算待发放积分：所有已批准缺陷的 earnedPoints + 所有订单的执行积分

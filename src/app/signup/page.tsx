@@ -52,26 +52,6 @@ export default function SignUp() {
     );
     const router = useRouter();
 
-    const sendCodeMutation = api.sms.sendCode.useMutation({
-        onSuccess: (data) => {
-            // TODO
-            showSuccessToast('验证码发送成功，测试环境，验证码为' + data.code);
-            setCountdown(60);
-            const timer = setInterval(() => {
-                setCountdown((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timer);
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        },
-        onError: (err: any) => {
-            showErrorToast(err?.message ?? '验证码发送失败');
-        },
-    });
-
     const signUpMutation = api.user.register.useMutation({
         onSuccess: () => {
             showSuccessToast('注册成功，请登录');
@@ -85,7 +65,6 @@ export default function SignUp() {
         register,
         handleSubmit,
         getValues,
-        watch,
         formState: { errors, isSubmitting },
     } = useForm<RegisterForm>({
         mode: 'onBlur',
@@ -99,17 +78,8 @@ export default function SignUp() {
         },
     });
 
-    const phoneValue = watch('phone');
-
     const handleSendCode = async () => {
-        if (!phoneValue || !/^1[3-9]\d{9}$/.test(phoneValue)) {
-            showErrorToast('请输入正确的手机号');
-            return;
-        }
-        await sendCodeMutation.mutateAsync({
-            phone: phoneValue,
-            type: 'REGISTER',
-        });
+        showErrorToast('当前不支持注册，请联系管理员');
     };
 
     const onSubmit = async (data: RegisterForm) => {
@@ -203,10 +173,7 @@ export default function SignUp() {
                             type="button"
                             variant="outline"
                             onClick={handleSendCode}
-                            disabled={
-                                countdown > 0 || sendCodeMutation.isPending
-                            }
-                            loading={sendCodeMutation.isPending}
+                            disabled={countdown > 0}
                             minW="100px"
                         >
                             {countdown > 0 ? `${countdown}s` : '发送验证码'}

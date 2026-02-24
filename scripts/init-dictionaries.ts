@@ -9,6 +9,7 @@ async function initDictionaries() {
     // 1. 创建或更新缺陷等级字典
     let defectSeverityDict = await prisma.dataDictionary.findUnique({
       where: { code: 'DEFECT_SEVERITY' },
+      include: { items: true },
     });
 
     if (!defectSeverityDict) {
@@ -75,6 +76,7 @@ async function initDictionaries() {
     // 2. 创建或更新建议等级字典
     let suggestionLevelDict = await prisma.dataDictionary.findUnique({
       where: { code: 'SUGGESTION_LEVEL' },
+      include: { items: true },
     });
 
     if (!suggestionLevelDict) {

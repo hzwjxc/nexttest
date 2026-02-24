@@ -149,7 +149,7 @@ export const superAdminProcedure = t.procedure
         const user = await ctx.db.user.findUnique({
             where: { id: ctx.session.user.id },
         });
-        if (!user || user.role !== ROLES.SUPERADMIN) {
+        if (!user || !user.roles.includes(ROLES.SUPER_ADMIN)) {
             throw new TRPCError({
                 code: 'FORBIDDEN',
                 message: '仅超级管理员可操作',

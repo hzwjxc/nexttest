@@ -2,7 +2,7 @@ services:
     # PostgreSQL 数据库
     db:
         image: postgres:17
-        container_name: nextmall-postgres
+        container_name: nexttest-postgres
         restart: always
 
         ports:
@@ -21,7 +21,7 @@ services:
 
     adminer:
         image: adminer
-        container_name: nextmall-adminer
+        container_name: nexttest-adminer
         restart: always
         networks:
             - default
@@ -36,7 +36,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        container_name: nextmall-app
+        container_name: nexttest-app
         restart: always
         ports:
             - '3000:3000'
