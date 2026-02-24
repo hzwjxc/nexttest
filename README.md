@@ -242,6 +242,43 @@ docker compose up -d
 
 docker-compose -f docker-compose.production.yml --env-file .env.production up -d
 
+## 生产构建报错
+
+Get "https://registry-1.docker.io/v2/": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
+方案一：配置国内镜像源（推荐）
+在服务器上编辑 /etc/docker/daemon.json
+添加以下内容：
+{
+"builder": {
+"gc": {
+"defaultKeepStorage": "20GB",
+"enabled": true
+}
+},
+"experimental": false,
+"registry-mirrors": [
+"https://docker.1panel.live",
+"https://docker.1ms.run",
+"https://dytt.online",
+"https://docker-0.unsee.tech",
+"https://lispy.org",
+"https://docker.xiaogenban1993.com",
+"https://666860.xyz",
+"https://hub.rat.dev",
+"https://docker.m.daocloud.io",
+"https://demo.52013120.xyz",
+"https://proxy.vvvv.ee",
+"https://registry.cyou",
+"https://mirror.ccs.tencentyun.com",
+"https://<your_code>.mirror.aliyuncs.com"
+]
+}
+然后重启 Docker：
+
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+再重新运行 docker-compose 命令。
+
 ---
 
 # 迁移数据库
