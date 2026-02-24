@@ -63,10 +63,6 @@ model User {
   organization        String? // 所属机构
   department          String? // 所属部门
   subDepartment       String? // 二级部门
-  position            String? // 职能岗位
-  education           String? // 最高学历
-  maritalStatus       String? // 婚姻状况
-  annualIncome        String? // 年收入
   specialties         String[] // 擅长领域
   wechatOpenId        String?      @unique // 微信OpenID
   alipayAccount       String? // 支付宝账号
@@ -90,7 +86,6 @@ model User {
   withdrawals        Withdrawal[] // 用户的提现记录
   tags               TestingUserTag[] // 用户标签
   pointTransactions  PointTransaction[] // 用户的积分交易记录
-  leaderboardEntries Leaderboard[] // 用户的排行榜记录
   academyFavorites   AcademyFavorite[] // 用户收藏的学堂文章
   userSettings       UserSettings? // 用户设置信息
   feedbacks          Feedback[] // 用户反馈
@@ -597,48 +592,6 @@ model AnnouncementReadRecord {
   @@index([readAt])
 }
 
-// 排行榜
-model Leaderboard {
-  id        String      @id @default(cuid()) // 排行榜ID
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade) // 关联用户
-  userId    String // 用户ID
-  type      String // 排行榜类型 (TOTAL_POINTS, TASK_COUNT, DEFECT_COUNT)
-  rank      Int // 排名
-  value     Int // 排行值
-  period    String // 统计周期 (DAILY, WEEKLY, MONTHLY, TOTAL)
-  updatedAt DateTime    @default(now()) @updatedAt // 更新时间
-
-  @@unique([userId, type, period])
-  @@index([type])
-  @@index([period])
-  @@index([rank])
-}
-
-// 众测审核记录
-model TestingAuditLog {
-  id           String   @id @default(cuid()) // 审核日志ID
-  action       String // 操作类型 (TASK_PUBLISH, TASK_APPROVE, DEFECT_REVIEW, REWARD_APPROVE, etc.)
-  module       String // 操作模块 (TASK, DEFECT, REWARD, USER, etc.)
-  description  String // 操作描述
-  targetId     String? // 操作目标ID
-  targetType   String? // 操作目标类型
-  operatorId   String? // 操作者ID
-  operatorInfo String? // 操作者信息快照
-  requestData  String? // 请求数据 (JSON)
-  responseData String? // 响应数据 (JSON)
-  status       String   @default("SUCCESS") // 操作状态
-  errorMessage String? // 错误信息
-  ipAddress    String? // 操作IP
-  userAgent    String? // 用户代理
-  duration     Int? // 操作耗时 (毫秒)
-  createdAt    DateTime @default(now()) // 操作时间
-
-  @@index([action])
-  @@index([module])
-  @@index([operatorId])
-  @@index([createdAt])
-}
-
 // 用户设置信息表
 model UserSettings {
   id                String      @id @default(cuid()) // 设置ID
@@ -650,9 +603,6 @@ model UserSettings {
   phoneModel        String? // 手机品牌、型号
   province          String? // 省份
   city              String? // 城市
-  organization      String? // 机构
-  department        String? // 部门
-  secondDepartment  String? // 二级部门
   skillTags         String[] // 擅长专业标签
   createdAt         DateTime @default(now()) // 创建时间
   updatedAt         DateTime @default(now()) @updatedAt // 更新时间
