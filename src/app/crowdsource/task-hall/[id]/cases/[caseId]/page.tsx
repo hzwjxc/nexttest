@@ -1147,9 +1147,11 @@ export default function TestCaseDetailPage() {
                 <DialogBackdrop />
                 <DialogContent maxW="600px" borderRadius="8px"
                     position="fixed"
-                    top="50%"
+                    top="40%"
                     left="50%"
-                    transform="translate(-50%, -50%)">
+                    transform="translate(-50%, -50%)"
+                    maxH="90vh"
+                >
                     <DialogHeader
                         fontSize="18px"
                         fontWeight="600"
@@ -1161,7 +1163,7 @@ export default function TestCaseDetailPage() {
                         {editingDefectId ? '编辑缺陷/建议' : '添加缺陷/建议'}
                     </DialogHeader>
                     <DialogCloseTrigger />
-                    <DialogBody py={6}>
+                    <DialogBody py={6} overflowY="auto">
                         <VStack gap={4} align="stretch">
                             {/* Title */}
                             <Box>

@@ -227,7 +227,7 @@ export default function DefectManagement() {
                     { label: '示例', value: 100, color: '#165dff' },
                 ],
                 statusDistribution: [
-                    { label: '待解决', value: 100, color: '#165dff' },
+                    { label: '待判定', value: 100, color: '#165dff' },
                 ],
                 platformDistribution: [
                     { label: 'iOS', value: 50, color: '#F7BA1E' },
@@ -263,7 +263,7 @@ export default function DefectManagement() {
                 { label: '致命', value: 30, color: '#d91ad9' },
             ],
             statusDistribution: [
-                { label: '待解决', value: 40, color: '#165dff' },
+                { label: '待判定', value: 40, color: '#165dff' },
                 { label: '已解决', value: 30, color: '#14c9c9' },
                 { label: '已忽略', value: 30, color: '#722ed1' },
             ],
@@ -277,7 +277,7 @@ export default function DefectManagement() {
     // 辅助函数
     function getStatusLabel(status: string): string {
         const statusMap: Record<string, string> = {
-            SUBMITTED: '待解决',
+            SUBMITTED: '待判定',
             REVIEWING: '判定中',
             TO_CONFIRM: '待确认',
             APPROVED: '已通过',
