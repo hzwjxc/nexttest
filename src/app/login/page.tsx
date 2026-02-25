@@ -356,6 +356,20 @@ export default function Login() {
                     >
                         登录问题指引
                     </Text>
+                    <VStack align="stretch">
+                        <HStack>
+                            <Text fontSize="14px" color="gray.800" fontWeight="500">
+                                测试OA账号：
+                            </Text>
+                            13760801130
+                        </HStack>
+                        <HStack>
+                            <Text fontSize="14px" color="gray.800" fontWeight="500">
+                                测试OA密码：
+                            </Text>
+                            Password123!
+                        </HStack>
+                    </VStack>
                 </Box>
             </Container>
 
