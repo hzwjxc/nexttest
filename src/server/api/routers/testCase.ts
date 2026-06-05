@@ -35,7 +35,8 @@ export const testCaseRouter = createTRPCRouter({
                     createdAt: {
                         gte: new Date(createdDate + 'T00:00:00.000Z'),
                         lt: new Date(
-                            new Date(createdDate).getTime() + 24 * 60 * 60 * 1000
+                            new Date(createdDate).getTime() +
+                                24 * 60 * 60 * 1000
                         ),
                     },
                 }),
@@ -88,7 +89,10 @@ export const testCaseRouter = createTRPCRouter({
     create: protectedProcedure
         .input(
             z.object({
-                title: z.string().min(1, '用例名称不能为空').max(200, '用例名称不能超过200个字符'),
+                title: z
+                    .string()
+                    .min(1, '用例名称不能为空')
+                    .max(200, '用例名称不能超过200个字符'),
                 system: z.string().min(1, '所属系统不能为空'),
                 precondition: z.string().optional(),
                 testSteps: z.string().min(1, '测试步骤不能为空'), // JSON格式的字符串
@@ -128,7 +132,10 @@ export const testCaseRouter = createTRPCRouter({
         .input(
             z.object({
                 id: z.string(),
-                title: z.string().min(1, '用例名称不能为空').max(200, '用例名称不能超过200个字符'),
+                title: z
+                    .string()
+                    .min(1, '用例名称不能为空')
+                    .max(200, '用例名称不能超过200个字符'),
                 system: z.string().min(1, '所属系统不能为空'),
                 precondition: z.string().optional(),
                 testSteps: z.string().min(1, '测试步骤不能为空'),
@@ -220,6 +227,56 @@ export const testCaseRouter = createTRPCRouter({
             return {
                 success: true,
                 message: `成功删除 ${result.count} 个用例`,
+                count: result.count,
+            };
+        }),
+
+    // 批量创建用例（用于 Excel 导入）
+    batchCreate: protectedProcedure
+        .input(
+            z.object({
+                cases: z
+                    .array(
+                        z.object({
+                            title: z
+                                .string()
+                                .min(1, '用例名称不能为空')
+                                .max(200, '用例名称不能超过200个字符'),
+                            system: z.string().min(1, '所属系统不能为空'),
+                            precondition: z.string().optional(),
+                            testSteps: z.string().min(1, '测试步骤不能为空'),
+                            explanation: z.string().optional(),
+                        })
+                    )
+                    .min(1, '至少需要一个用例'),
+            })
+        )
+        .mutation(async ({ ctx, input }) => {
+            // 验证所有 testSteps 是否为有效 JSON
+            for (const c of input.cases) {
+                try {
+                    JSON.parse(c.testSteps);
+                } catch {
+                    throw new TRPCError({
+                        code: 'BAD_REQUEST',
+                        message: `用例「${c.title}」的测试步骤格式不正确`,
+                    });
+                }
+            }
+
+            const result = await ctx.db.testCase.createMany({
+                data: input.cases.map((c) => ({
+                    title: c.title,
+                    system: c.system,
+                    precondition: c.precondition,
+                    testSteps: c.testSteps,
+                    explanation: c.explanation,
+                })),
+            });
+
+            return {
+                success: true,
+                message: `成功导入 ${result.count} 个用例`,
                 count: result.count,
             };
         }),
